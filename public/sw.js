@@ -1,4 +1,4 @@
-const CACHE = "volta-shell-v3";
+const CACHE = "volta-shell-v4";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
   OFFLINE_URL,
@@ -36,21 +36,41 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache authenticated API traffic or dynamic HTML documents.
+  // Never cache authenticated API traffic.
   if (/\/(?:auth\/v1|rest\/v1|functions\/v1)\//.test(url.pathname)) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(async () => {
-        const offline = await caches.match(OFFLINE_URL);
-        return (
-          offline ||
-          new Response(
-            "لا يوجد اتصال بالإنترنت. بيانات الطابور المحلي لا تُحذف بسبب انقطاع الشبكة؛ أعد فتح VOLTA عند عودة الاتصال.",
-            { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
-          )
-        );
-      }),
+      (async () => {
+        try {
+          const response = await fetch(request);
+          const cacheControl = response.headers.get("cache-control") || "";
+          // Cache only the public root shell, never route-specific or account-specific pages.
+          if (
+            url.pathname === "/" &&
+            !url.search &&
+            response.ok &&
+            (response.headers.get("content-type") || "").includes("text/html") &&
+            !response.headers.has("set-cookie") &&
+            !/no-store|private/i.test(cacheControl)
+          ) {
+            const cache = await caches.open(CACHE);
+            await cache.put("/", response.clone());
+          }
+          return response;
+        } catch {
+          const shell = await caches.match("/");
+          if (shell) return shell;
+          const offline = await caches.match(OFFLINE_URL);
+          return (
+            offline ||
+            new Response(
+              "لا يوجد اتصال بالإنترنت. أعد فتح VOLTA عند عودة الاتصال؛ لن تُرسل العمليات المحفوظة إلا بعد استعادة جلسة المستخدم.",
+              { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+            )
+          );
+        }
+      })(),
     );
     return;
   }
@@ -60,7 +80,6 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
-
         const response = await fetch(request);
         const cacheControl = response.headers.get("cache-control") || "";
         if (
