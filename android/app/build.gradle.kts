@@ -11,12 +11,11 @@ android {
         applicationId = "com.muslly.volta"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
-    // Keep javac and Kotlin bytecode targets aligned. The previous mismatch
-    // (Java 8 vs Kotlin 17) caused the first APK build to fail.
+    // Keep javac and Kotlin bytecode targets aligned.
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
