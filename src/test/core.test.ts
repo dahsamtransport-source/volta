@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { lineTotal, linesTotal, toFixed, parseDec, mul } from "@/lib/decimal";
 import { resolveAccess, can } from "@/lib/auth/roles";
 import { checkPublishableKey } from "@/lib/config";
+import { normalizeYemenPhone } from "@/lib/auth/phone";
 import { OfflineQueue, MemoryQueueStorage } from "@/lib/offline/queue";
 
 describe("decimal", () => {
@@ -19,6 +20,18 @@ describe("roles", () => {
     expect(can(resolveAccess({ app_metadata: { field_sales_role: "supervisor" } }), "admin_users")).toBe(false);
   });
   it("signed out denies", () => expect(can(resolveAccess(null), "view")).toBe(false));
+});
+
+describe("Yemeni phone normalization", () => {
+  it("normalizes nine-digit local mobile numbers", () => expect(normalizeYemenPhone("782878280")).toBe("+967782878280"));
+  it("normalizes international formats", () => {
+    expect(normalizeYemenPhone("+967 773 934 270")).toBe("+967773934270");
+    expect(normalizeYemenPhone("00967774068936")).toBe("+967774068936");
+  });
+  it("rejects invalid numbers and email identifiers", () => {
+    expect(normalizeYemenPhone("12345")).toBeNull();
+    expect(normalizeYemenPhone("user@example.com")).toBeNull();
+  });
 });
 
 describe("key guard", () => {
