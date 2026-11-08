@@ -42,7 +42,7 @@ function isPermanentSyncError(error: { code?: string; message?: string }): boole
 }
 
 export function VisitCapture() {
-  const { access, online } = useSession();
+  const { access, online, user } = useSession();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [representatives, setRepresentatives] = useState<Representative[]>([]);
   const [establishmentId, setEstablishmentId] = useState("");
@@ -57,6 +57,9 @@ export function VisitCapture() {
   const [message, setMessage] = useState("");
   const [lookupMessage, setLookupMessage] = useState("");
   const syncLock = useRef(false);
+  const ownerUserId = user?.id ?? "";
+  const establishmentsCacheKey = `${ESTABLISHMENTS_CACHE}.${ownerUserId}`;
+  const representativesCacheKey = `${REPRESENTATIVES_CACHE}.${ownerUserId}`;
 
   const isManager = access.status === "granted" && access.role !== "representative";
   const ownRepresentativeId =
@@ -76,8 +79,8 @@ export function VisitCapture() {
   }, []);
 
   const loadLookups = useCallback(async () => {
-    const cachedEstablishments = readCache<Establishment>(ESTABLISHMENTS_CACHE);
-    const cachedRepresentatives = readCache<Representative>(REPRESENTATIVES_CACHE);
+    const cachedEstablishments = readCache<Establishment>(establishmentsCacheKey);
+    const cachedRepresentatives = readCache<Representative>(representativesCacheKey);
     setEstablishments(cachedEstablishments);
     if (isManager) setRepresentatives(cachedRepresentatives);
 
@@ -105,7 +108,7 @@ export function VisitCapture() {
     if (!establishmentResult.error && establishmentResult.data) {
       const rows = establishmentResult.data as Establishment[];
       setEstablishments(rows);
-      localStorage.setItem(ESTABLISHMENTS_CACHE, JSON.stringify(rows));
+      localStorage.setItem(establishmentsCacheKey, JSON.stringify(rows));
       setLookupMessage("");
     } else {
       setLookupMessage("تعذر تحديث المنشآت؛ ستظل القائمة المحلية متاحة عند وجودها.");
@@ -114,9 +117,9 @@ export function VisitCapture() {
     if (isManager && !representativeResult.error && representativeResult.data) {
       const rows = representativeResult.data as Representative[];
       setRepresentatives(rows);
-      localStorage.setItem(REPRESENTATIVES_CACHE, JSON.stringify(rows));
+      localStorage.setItem(representativesCacheKey, JSON.stringify(rows));
     }
-  }, [isManager]);
+  }, [isManager, establishmentsCacheKey, representativesCacheKey]);
 
   const syncPending = useCallback(async () => {
     if (!navigator.onLine || syncLock.current) return;
@@ -128,7 +131,11 @@ export function VisitCapture() {
       const items = await getQueue().list();
       const pending = items.filter((item) => item.table === "visits" && item.op === "insert" && item.status === "pending");
       for (const item of pending) {
-        const payload = item.payload;
+        const { __owner_user_id: queueOwnerId, ...payload } = item.payload;
+        if (typeof queueOwnerId !== "string" || queueOwnerId !== ownerUserId) {
+          await getQueue().markConflict(item.idempotencyKey, "هذه العملية تخص حساباً آخر على الجهاز. سجّل الدخول بالحساب الأصلي لمزامنتها.");
+          continue;
+        }
         const { error } = await client.from("visits").insert(payload);
         if (!error) {
           await getQueue().discard(item.idempotencyKey);
@@ -163,7 +170,7 @@ export function VisitCapture() {
       syncLock.current = false;
       await refreshQueueCounts();
     }
-  }, [refreshQueueCounts]);
+  }, [ownerUserId, refreshQueueCounts]);
 
   useEffect(() => {
     void loadLookups();
@@ -211,6 +218,10 @@ export function VisitCapture() {
     setMessage("");
 
     const repId = ownRepresentativeId ?? (isManager ? representativeId : "");
+    if (!user?.id) {
+      setMessage("انتهت الجلسة. سجّل الدخول قبل حفظ الزيارة.");
+      return;
+    }
     if (!establishmentId || !repId) {
       setMessage("اختر المنشأة والمندوب قبل الحفظ.");
       return;
@@ -232,6 +243,8 @@ export function VisitCapture() {
         device_created_at: now,
         gps_capture_consent: Boolean(gps),
         photo_consent: false,
+        // Local-only ownership marker; stripped before the database insert.
+        __owner_user_id: user.id,
       };
 
       if (gps) {
