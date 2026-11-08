@@ -53,11 +53,11 @@ async function loadMetrics(): Promise<DashboardMetrics> {
   const countOrNull = (result: { count: number | null; error: { message: string } | null }) =>
     result.error ? null : result.count ?? 0;
 
-  const dateKey = (value: string) => new Date(value).toISOString().slice(0, 10);
+  const dateKey = (value: string | Date) => { const date = value instanceof Date ? value : new Date(value); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
   const days: DailyPoint[] = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
-    const key = date.toISOString().slice(0, 10);
+    const key = dateKey(date);
     return {
       day: new Intl.DateTimeFormat("ar-YE", { weekday: "short" }).format(date),
       visits: 0,
