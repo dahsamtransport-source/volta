@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/icon-192.png" },
+      { rel: "apple-touch-icon", href: "/volta-icon.svg" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
@@ -122,6 +122,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const register = () => { void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => console.error("VOLTA service worker registration failed", error)); };
+    if (document.readyState === "complete") register();
+    else { window.addEventListener("load", register, { once: true }); return () => window.removeEventListener("load", register); }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
