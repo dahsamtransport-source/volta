@@ -13,7 +13,7 @@ export function normalizeYemenPhone(value: string): string | null {
   if (digits.startsWith("0")) digits = digits.slice(1);
 
   if (digits.length !== 9 || !digits.startsWith("7")) return null;
-  return \`+967\${digits}\`;
+  return "+967" + digits;
 }
 
 export function isPhoneLike(value: string): boolean {
