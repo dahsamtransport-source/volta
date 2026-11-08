@@ -22,7 +22,7 @@
 - Pin the Android build to Gradle 8.9, matching Android Gradle Plugin 8.7.3.
 - Add a Web CI workflow for frozen-lockfile install, lint, unit tests, and production build.
 - Cache same-origin HTML navigation responses for offline shell fallback, without caching Supabase API traffic or responses marked private/no-store.
-- Add local-first visit capture for authenticated users. Visit writes are queued in IndexedDB and replayed through the authenticated Supabase client with per-device idempotency keys. RLS and database constraints remain authoritative.
+- Add local-first visit capture for authenticated users. Visit writes are queued in IndexedDB, bound to the originating auth user, and replayed through the authenticated Supabase client with per-device idempotency keys. The local establishment/representative lookup cache is namespaced per user. RLS and database constraints remain authoritative.
 
 ## Explicit release blockers
 
