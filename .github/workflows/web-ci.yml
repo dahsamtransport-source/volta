@@ -1,0 +1,34 @@
+name: VOLTA Web CI
+
+on:
+  push:
+    branches:
+      - fix/volta-reliability-20261108
+      - recovery/import-lovable-source
+  pull_request:
+    branches:
+      - main
+      - recovery/import-lovable-source
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.5"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Format and lint changed screens
+        run: |
+          bunx prettier --write src/components/data/VisitCapture.tsx src/routes/visits.tsx
+          bunx eslint src/components/data/VisitCapture.tsx src/routes/visits.tsx
+      - name: Unit tests
+        run: bun run test
+      - name: Production build
+        run: bun run build
