@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/common/PageHeader";
 import { useSession } from "@/data/session";
@@ -25,7 +25,7 @@ function Setup() {
   const [busy, setBusy] = useState(false);
   const [probe, setProbe] = useState<ProbeResult[] | null>(null);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMsg(null);
     setBusy(true);
