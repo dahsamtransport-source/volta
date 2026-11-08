@@ -42,7 +42,7 @@ function isPermanentSyncError(error: { code?: string; message?: string }): boole
 }
 
 export function VisitCapture() {
-  const { access, online, user } = useSession();
+  const { access, online, user, loading } = useSession();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [representatives, setRepresentatives] = useState<Representative[]>([]);
   const [establishmentId, setEstablishmentId] = useState("");
@@ -70,15 +70,22 @@ export function VisitCapture() {
   const refreshQueueCounts = useCallback(async () => {
     try {
       const rows = await getQueue().list();
-      const visits = rows.filter((item) => item.table === "visits");
+      const visits = rows.filter((item) => item.table === "visits" && item.payload.__owner_user_id === ownerUserId);
       setPendingCount(visits.filter((item) => item.status === "pending").length);
       setConflictCount(visits.filter((item) => item.status === "conflict" || item.status === "failed").length);
     } catch {
       setLookupMessage("تعذر فتح مخزن العمليات المحلية على هذا الجهاز.");
     }
-  }, []);
+  }, [ownerUserId]);
 
   const loadLookups = useCallback(async () => {
+    if (loading) return;
+    if (!ownerUserId) {
+      setEstablishments([]);
+      setRepresentatives([]);
+      setLookupMessage("سجّل الدخول لتحميل قوائم الزيارات.");
+      return;
+    }
     const cachedEstablishments = readCache<Establishment>(establishmentsCacheKey);
     const cachedRepresentatives = readCache<Representative>(representativesCacheKey);
     setEstablishments(cachedEstablishments);
@@ -119,10 +126,10 @@ export function VisitCapture() {
       setRepresentatives(rows);
       localStorage.setItem(representativesCacheKey, JSON.stringify(rows));
     }
-  }, [isManager, establishmentsCacheKey, representativesCacheKey]);
+  }, [isManager, loading, ownerUserId, establishmentsCacheKey, representativesCacheKey]);
 
   const syncPending = useCallback(async () => {
-    if (!navigator.onLine || syncLock.current) return;
+    if (loading || !ownerUserId || !navigator.onLine || syncLock.current) return;
     const client = getClient();
     if (!client) return;
 
@@ -132,8 +139,12 @@ export function VisitCapture() {
       const pending = items.filter((item) => item.table === "visits" && item.op === "insert" && item.status === "pending");
       for (const item of pending) {
         const { __owner_user_id: queueOwnerId, ...payload } = item.payload;
-        if (typeof queueOwnerId !== "string" || queueOwnerId !== ownerUserId) {
-          await getQueue().markConflict(item.idempotencyKey, "هذه العملية تخص حساباً آخر على الجهاز. سجّل الدخول بالحساب الأصلي لمزامنتها.");
+        if (typeof queueOwnerId !== "string") {
+          await getQueue().markConflict(item.idempotencyKey, "تعذر التحقق من مالك هذه العملية المحلية؛ لم تُرسل إلى الخادم.");
+          continue;
+        }
+        if (queueOwnerId !== ownerUserId) {
+          // Preserve another user\u0027s pending operation unchanged; it may sync after that user signs in.
           continue;
         }
         const { error } = await client.from("visits").insert(payload);
@@ -170,7 +181,7 @@ export function VisitCapture() {
       syncLock.current = false;
       await refreshQueueCounts();
     }
-  }, [ownerUserId, refreshQueueCounts]);
+  }, [loading, ownerUserId, refreshQueueCounts]);
 
   useEffect(() => {
     void loadLookups();
