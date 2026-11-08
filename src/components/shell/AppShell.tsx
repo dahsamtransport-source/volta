@@ -100,7 +100,7 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="space-y-1 text-xs font-normal">
           <span className="block truncate" dir="ltr">{identity}</span>
-          <span className="block text-muted-foreground">{access.status === "granted" ? \`الدور: \${ROLE_LABEL[access.role]}\` : "لا توجد صلاحية مفعّلة"}</span>
+          <span className="block text-muted-foreground">{access.status === "granted" ? "الدور: " + ROLE_LABEL[access.role] : "لا توجد صلاحية مفعّلة"}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {user ? (
