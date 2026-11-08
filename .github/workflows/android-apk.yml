@@ -41,7 +41,7 @@ jobs:
           archive="gradle-${version}-bin.zip"
           curl --fail --silent --show-error --location "https://services.gradle.org/distributions/${archive}" --output "${archive}"
           expected="$(curl --fail --silent --show-error --location "https://services.gradle.org/distributions/${archive}.sha256")"
-          printf '%s  %s\\n' "${expected}" "${archive}" | sha256sum --check
+          printf '%s  %s\n' "${expected}" "${archive}" | sha256sum --check
           unzip -q "${archive}" -d "${RUNNER_TEMP}"
           echo "${RUNNER_TEMP}/gradle-${version}/bin" >> "${GITHUB_PATH}"
 
