@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { getClient } from "@/data/client";
 import { useSession } from "@/data/session";
-import { getQueue, newIdempotencyKey, type QueuedMutation } from "@/lib/offline/queue";
+import { getQueue, newIdempotencyKey } from "@/lib/offline/queue";
 
 type Establishment = { id: string; code: string; name: string };
 type Representative = { id: string; employee_code: string; full_name: string };
@@ -206,7 +206,7 @@ export function VisitCapture() {
     );
   };
 
-  const saveVisit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveVisit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
 
