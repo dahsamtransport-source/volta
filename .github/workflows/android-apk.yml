@@ -10,6 +10,12 @@ on:
     paths:
       - "android/**"
       - ".github/workflows/android-apk.yml"
+  pull_request:
+    branches:
+      - recovery/import-lovable-source
+    paths:
+      - "android/**"
+      - ".github/workflows/android-apk.yml"
 
 permissions:
   contents: read
@@ -35,7 +41,7 @@ jobs:
           archive="gradle-${version}-bin.zip"
           curl --fail --silent --show-error --location "https://services.gradle.org/distributions/${archive}" --output "${archive}"
           expected="$(curl --fail --silent --show-error --location "https://services.gradle.org/distributions/${archive}.sha256")"
-          printf '%s  %s\n' "${expected}" "${archive}" | sha256sum --check
+          printf '%s  %s\\n' "${expected}" "${archive}" | sha256sum --check
           unzip -q "${archive}" -d "${RUNNER_TEMP}"
           echo "${RUNNER_TEMP}/gradle-${version}/bin" >> "${GITHUB_PATH}"
 
@@ -49,7 +55,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: volta-android-debug-apk
+          name: volta-android-debug-apk-v0.2.0
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
