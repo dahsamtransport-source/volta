@@ -27,9 +27,15 @@ export function newIdempotencyKey(): string {
 
 export class MemoryQueueStorage implements QueueStorage {
   private map = new Map<string, QueuedMutation>();
-  async all() { return [...this.map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt)); }
-  async put(m: QueuedMutation) { this.map.set(m.idempotencyKey, m); }
-  async remove(k: string) { this.map.delete(k); }
+  async all() {
+    return [...this.map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+  async put(m: QueuedMutation) {
+    this.map.set(m.idempotencyKey, m);
+  }
+  async remove(k: string) {
+    this.map.delete(k);
+  }
 }
 
 const DB = "lahj-field-sales";
@@ -44,7 +50,10 @@ export class IndexedDbQueueStorage implements QueueStorage {
       r.onerror = () => rej(r.error);
     });
   }
-  private async tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  private async tx<T>(
+    mode: IDBTransactionMode,
+    fn: (s: IDBObjectStore) => IDBRequest<T>,
+  ): Promise<T> {
     const db = await this.db();
     return new Promise((res, rej) => {
       const req = fn(db.transaction(STORE, mode).objectStore(STORE));
@@ -53,11 +62,18 @@ export class IndexedDbQueueStorage implements QueueStorage {
     });
   }
   async all() {
-    const rows = await this.tx<QueuedMutation[]>("readonly", (s) => s.getAll() as IDBRequest<QueuedMutation[]>);
+    const rows = await this.tx<QueuedMutation[]>(
+      "readonly",
+      (s) => s.getAll() as IDBRequest<QueuedMutation[]>,
+    );
     return rows.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
-  async put(m: QueuedMutation) { await this.tx("readwrite", (s) => s.put(m)); }
-  async remove(k: string) { await this.tx("readwrite", (s) => s.delete(k)); }
+  async put(m: QueuedMutation) {
+    await this.tx("readwrite", (s) => s.put(m));
+  }
+  async remove(k: string) {
+    await this.tx("readwrite", (s) => s.delete(k));
+  }
 }
 
 export class OfflineQueue {
@@ -70,16 +86,23 @@ export class OfflineQueue {
     await this.storage.put({ ...m, createdAt: new Date().toISOString(), status: "pending" });
     return true;
   }
-  list() { return this.storage.all(); }
+  list() {
+    return this.storage.all();
+  }
   async markConflict(key: string, error: string) {
     const m = (await this.storage.all()).find((x) => x.idempotencyKey === key);
     if (m) await this.storage.put({ ...m, status: "conflict", error });
   }
-  discard(key: string) { return this.storage.remove(key); }
+  discard(key: string) {
+    return this.storage.remove(key);
+  }
 }
 
 let shared: OfflineQueue | null = null;
 export function getQueue(): OfflineQueue {
-  if (!shared) shared = new OfflineQueue(typeof indexedDB !== "undefined" ? new IndexedDbQueueStorage() : new MemoryQueueStorage());
+  if (!shared)
+    shared = new OfflineQueue(
+      typeof indexedDB !== "undefined" ? new IndexedDbQueueStorage() : new MemoryQueueStorage(),
+    );
   return shared;
 }

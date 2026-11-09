@@ -29,27 +29,48 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     const c = getClient();
-    if (!c) { setLoading(false); return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); }; }
+    if (!c) {
+      setLoading(false);
+      return () => {
+        window.removeEventListener("online", on);
+        window.removeEventListener("offline", off);
+      };
+    }
     // getUser re-validates with the auth server (trusted app_metadata).
-    c.auth.getUser().then(({ data }) => { setUser(data.user ?? null); setLoading(false); });
+    c.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+      setLoading(false);
+    });
     const { data: sub } = c.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED")
         c.auth.getUser().then(({ data }) => setUser(data.user ?? null));
     });
-    return () => { sub.subscription.unsubscribe(); window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+    return () => {
+      sub.subscription.unsubscribe();
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
   }, []);
 
-  const value = useMemo<SessionValue>(() => ({
-    keyCheck, loading, user, online,
-    access: resolveAccess(user),
-    signIn: async (email, password) => {
-      const c = getClient();
-      if (!c) return "غير متصل بقاعدة البيانات";
-      const { error } = await c.auth.signInWithPassword({ email, password });
-      return error ? error.message : null;
-    },
-    signOut: async () => { await getClient()?.auth.signOut(); },
-  }), [keyCheck, loading, user, online]);
+  const value = useMemo<SessionValue>(
+    () => ({
+      keyCheck,
+      loading,
+      user,
+      online,
+      access: resolveAccess(user),
+      signIn: async (email, password) => {
+        const c = getClient();
+        if (!c) return "غير متصل بقاعدة البيانات";
+        const { error } = await c.auth.signInWithPassword({ email, password });
+        return error ? error.message : null;
+      },
+      signOut: async () => {
+        await getClient()?.auth.signOut();
+      },
+    }),
+    [keyCheck, loading, user, online],
+  );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
