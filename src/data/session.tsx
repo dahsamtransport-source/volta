@@ -41,21 +41,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     let active = true;
-    c.auth.getUser().then(({ data, error }) => {
+    let authEventReceived = false;
+
+    // Subscribe before the one-off lookup. A slow getUser() response must not
+    // overwrite a newer SIGNED_OUT/SIGNED_IN event.
+    const { data: sub } = c.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
+      authEventReceived = true;
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    c.auth.getUser().then(({ data, error }) => {
+      if (!active || authEventReceived) return;
       setUser(error ? null : data.user ?? null);
       setLoading(false);
     }).catch(() => {
-      if (active) {
+      if (active && !authEventReceived) {
         setUser(null);
-        setLoading(false);
-      }
-    });
-
-    const { data: sub } = c.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
-        // The Auth event session is authoritative for the current browser session.
-        setUser(session?.user ?? null);
         setLoading(false);
       }
     });
@@ -95,18 +98,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!c) return "الاتصال بقاعدة البيانات غير مُعدّ حالياً.";
       const normalizedPhone = normalizeYemenPhone(phone);
       if (!normalizedPhone) return "رقم الهاتف اليمني غير صحيح.";
-      const { error } = await c.auth.signInWithOtp({
-        phone: normalizedPhone,
-        options: {
-          channel: "whatsapp",
-          // New staff must be provisioned by an administrator first.
-          // This prevents public self-registration and unassigned accounts.
-          shouldCreateUser: false,
-        },
-      });
-      return error
-        ? "تعذر إرسال رمز WhatsApp. تأكد أن الحساب أُنشئ مسبقاً وأن قناة WhatsApp مهيأة."
-        : null;
+      try {
+        const { error } = await c.auth.signInWithOtp({
+          phone: normalizedPhone,
+          options: {
+            channel: "whatsapp",
+            // New staff must be provisioned by an administrator first.
+            // This prevents public self-registration and unassigned accounts.
+            shouldCreateUser: false,
+          },
+        });
+        return error
+          ? "تعذر إرسال رمز WhatsApp. تأكد أن الحساب أُنشئ مسبقاً وأن قناة WhatsApp مهيأة."
+          : null;
+      } catch {
+        return "تعذر الاتصال بخدمة WhatsApp. تحقق من الإنترنت ثم أعد المحاولة.";
+      }
     },
     verifyWhatsAppOtp: async (phone, token) => {
       const c = getClient();
@@ -115,16 +122,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!normalizedPhone) return "رقم الهاتف اليمني غير صحيح.";
       const cleanToken = token.replace(/\D/g, "");
       if (!/^\d{6}$/.test(cleanToken)) return "أدخل رمز التحقق المكوّن من 6 أرقام.";
-      const { error } = await c.auth.verifyOtp({
-        phone: normalizedPhone,
-        token: cleanToken,
-        // Supabase verifies WhatsApp-delivered phone OTPs using type "sms".
-        type: "sms",
-      });
-      return error ? "رمز التحقق غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً." : null;
+      try {
+        const { error } = await c.auth.verifyOtp({
+          phone: normalizedPhone,
+          token: cleanToken,
+          // Supabase verifies WhatsApp-delivered phone OTPs using type "sms".
+          type: "sms",
+        });
+        return error ? "رمز التحقق غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً." : null;
+      } catch {
+        return "تعذر الاتصال بخدمة التحقق. تحقق من الإنترنت ثم أعد المحاولة.";
+      }
     },
     signOut: async () => {
-      await getClient()?.auth.signOut();
+      try {
+        await getClient()?.auth.signOut();
+      } catch {
+        // Keep the UI responsive if the network is unavailable.
+      }
     },
   }), [keyCheck, loading, user, online]);
 
