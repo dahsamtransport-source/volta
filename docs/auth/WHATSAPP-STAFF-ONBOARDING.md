@@ -2,7 +2,7 @@
 
 ## Initial rollout accounts
 
-The initial administrator, supervisor, and sales-representative accounts are provisioned by a trusted administrator without phone OTP confirmation. They sign in using their assigned phone number and a strong temporary password. Temporary credentials must be delivered privately and changed on first sign-in. Never put credentials in source control, SQL seeds, browser code, APK assets, or logs.
+The initial rollout is intended to use password authentication (no phone OTP) for the three designated accounts. "No OTP" describes the login factor only: each account still requires a real Supabase Auth user, trusted `app_metadata`, and a correctly linked `field_sales.user_profiles` row. The administrator maps to the database `manager` profile. The sales representative maps to `representative` only after linking the account to the correct active representative record. The current database has no separate supervisor profile; do not create the supervisor with the `manager` profile. Supervisor provisioning and data access must wait for the reviewed role/RLS migration described below. Temporary credentials must be delivered privately and changed on first sign-in. Never put credentials in source control, SQL seeds, browser code, APK assets, or logs.
 
 The current connected session has no Supabase Auth Admin create/update-user action. Do not create rows directly in `auth.users`, do not set `phone_confirmed_at` using SQL, and do not bypass Auth through client-side code. Use the Supabase Auth Admin API from a protected server-side function or the Supabase Dashboard.
 
