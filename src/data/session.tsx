@@ -12,6 +12,8 @@ export interface SessionValue {
   access: AccessState;
   online: boolean;
   signIn: (identifier: string, password: string) => Promise<string | null>;
+  requestWhatsAppOtp: (phone: string) => Promise<string | null>;
+  verifyWhatsAppOtp: (phone: string, token: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -52,7 +54,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const { data: sub } = c.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
-        // The auth event session is authoritative for the current browser session.
+        // The Auth event session is authoritative for the current browser session.
         setUser(session?.user ?? null);
         setLoading(false);
       }
@@ -80,13 +82,46 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (isPhoneLike(identifier)) {
         if (!normalizedPhone) return "رقم الهاتف غير صحيح. أدخل رقم يمنياً يبدأ بـ 7 أو بصيغة +967.";
         const { error } = await c.auth.signInWithPassword({ phone: normalizedPhone, password });
-        if (error) return "تعذر تسجيل الدخول. تحقق من كلمة المرور، ومن تفعيل Phone Auth وتأكيد رقم الهاتف.";
+        if (error) return "تعذر تسجيل الدخول. تحقق من بيانات الحساب.";
         return null;
       }
 
       if (!identifier.includes("@")) return "أدخل رقم هاتف يمنياً أو بريداً إلكترونياً صحيحاً.";
       const { error } = await c.auth.signInWithPassword({ email: identifier.trim(), password });
-      return error ? "تعذر تسجيل الدخول. تحقق من البريد الإلكتروني وكلمة المرور." : null;
+      return error ? "تعذر تسجيل الدخول. تحقق من بيانات الحساب." : null;
+    },
+    requestWhatsAppOtp: async (phone) => {
+      const c = getClient();
+      if (!c) return "الاتصال بقاعدة البيانات غير مُعدّ حالياً.";
+      const normalizedPhone = normalizeYemenPhone(phone);
+      if (!normalizedPhone) return "رقم الهاتف اليمني غير صحيح.";
+      const { error } = await c.auth.signInWithOtp({
+        phone: normalizedPhone,
+        options: {
+          channel: "whatsapp",
+          // New staff must be provisioned by an administrator first.
+          // This prevents public self-registration and unassigned accounts.
+          shouldCreateUser: false,
+        },
+      });
+      return error
+        ? "تعذر إرسال رمز WhatsApp. تأكد أن الحساب أُنشئ مسبقاً وأن قناة WhatsApp مهيأة."
+        : null;
+    },
+    verifyWhatsAppOtp: async (phone, token) => {
+      const c = getClient();
+      if (!c) return "الاتصال بقاعدة البيانات غير مُعدّ حالياً.";
+      const normalizedPhone = normalizeYemenPhone(phone);
+      if (!normalizedPhone) return "رقم الهاتف اليمني غير صحيح.";
+      const cleanToken = token.replace(/\D/g, "");
+      if (!/^\d{6}$/.test(cleanToken)) return "أدخل رمز التحقق المكوّن من 6 أرقام.";
+      const { error } = await c.auth.verifyOtp({
+        phone: normalizedPhone,
+        token: cleanToken,
+        // Supabase verifies WhatsApp-delivered phone OTPs using type "sms".
+        type: "sms",
+      });
+      return error ? "رمز التحقق غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً." : null;
     },
     signOut: async () => {
       await getClient()?.auth.signOut();
