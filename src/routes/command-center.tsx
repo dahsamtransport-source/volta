@@ -1,8 +1,9 @@
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   Activity, AlertTriangle, ArrowLeft, Boxes, Building2, CalendarClock,
-  CalendarDays, CheckCircle2, ClipboardList, Droplets, Fuel, Gauge,
+ CheckCircle2, ClipboardList, Droplets, Fuel, Gauge,
   MapPinned, Package, RefreshCw, ShieldCheck, Sun, Users, Wifi, WifiOff,
 } from "lucide-react";
 import {
@@ -38,6 +39,8 @@ type CommandMetrics = {
   overdue: number | null;
   trend: TrendPoint[];
   activity: VisitPoint[];
+  trendAvailable: boolean;
+  activityAvailable: boolean;
   updatedAt: string;
 };
 
@@ -96,6 +99,8 @@ async function loadCommandMetrics(): Promise<CommandMetrics> {
     overdue: count(overdue),
     trend: buildCommandTrend(visitData, saleData, now),
     activity: visitData.slice(0, 5),
+    trendAvailable: !visitRows.error && !saleRows.error,
+    activityAvailable: !visitRows.error,
     updatedAt: now.toISOString(),
   };
 }
@@ -123,7 +128,7 @@ function MetricCard({ title, value, note, icon: Icon, tone }: {
 function Panel({ title, subtitle, children, action }: {
   title: string;
   subtitle?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   action?: React.ReactNode;
 }) {
   return (
@@ -239,7 +244,7 @@ function InventoryStatus({ products }: { products: number | null }) {
 
 function CommandCenterContent() {
   const { online } = useSession();
-  const [fieldMode, setFieldMode] = React.useState(false);
+  const [fieldMode, setFieldMode] = useState(false);
   const query = useQuery({
     queryKey: ["volta", "command-center", "verified-metrics"],
     queryFn: loadCommandMetrics,
@@ -317,7 +322,7 @@ function CommandCenterContent() {
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
             <Panel title="نشاط الزيارات" subtitle="مخطط مبني على أوقات الزيارات والمبيعات المسجلة فعلياً في آخر سبعة أيام." action={<span className="text-[10px] text-slate-400">آخر تحديث {new Intl.DateTimeFormat("ar-YE", { hour: "2-digit", minute: "2-digit" }).format(new Date(data.updatedAt))}</span>}>
               <div className="h-60 min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+                {data.trendAvailable ? <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.trend} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="vc-visits-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00AEEF" stopOpacity=".35" /><stop offset="100%" stopColor="#00AEEF" stopOpacity=".02" /></linearGradient>
@@ -330,11 +335,11 @@ function CommandCenterContent() {
                     <Area type="monotone" dataKey="visits" name="الزيارات" stroke="#00AEEF" strokeWidth={2.5} fill="url(#vc-visits-fill)" />
                     <Area type="monotone" dataKey="sales" name="المبيعات" stroke="#F59E0B" strokeWidth={2.5} fill="url(#vc-sales-fill)" />
                   </AreaChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer> : <StateNotice kind="error" title="تعذر تحميل بيانات الرسم">تحقق من أذونات الوصول إلى سجلات الزيارات والمبيعات.</StateNotice>}
               </div>
             </Panel>
             <Panel title="آخر النشاطات" subtitle="آخر خمس زيارات مسجلة، دون إظهار بيانات شخصية غير لازمة." action={<Link to="/visits" className="inline-flex items-center gap-1 text-[10px] font-semibold text-sky-300">كل الزيارات <ArrowLeft className="size-3" /></Link>}>
-              <ActivityFeed rows={data.activity} />
+              {data.activityAvailable ? <ActivityFeed rows={data.activity} /> : <StateNotice kind="error" title="تعذر تحميل سجل الزيارات">تحقق من أذونات الجدول ثم أعد المحاولة.</StateNotice>}
             </Panel>
           </div>
 
