@@ -36,7 +36,14 @@ export type Capability =
   | "admin_users";
 
 const MATRIX: Record<FieldSalesRole, Capability[]> = {
-  admin: ["view", "manage_master_data", "manage_assignments", "confirm_sales", "view_audit", "admin_users"],
+  admin: [
+    "view",
+    "manage_master_data",
+    "manage_assignments",
+    "confirm_sales",
+    "view_audit",
+    "admin_users",
+  ],
   supervisor: ["view", "manage_assignments", "confirm_sales", "view_audit"],
   representative: ["view"],
 };

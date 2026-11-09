@@ -9,8 +9,13 @@ export type Dec = bigint; // value * 10^SCALE
 
 export function parseDec(input: string | number | null | undefined): Dec {
   if (input === null || input === undefined || input === "") return 0n;
-  const s = String(input).trim().replace(/[٬,\s]/g, "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace("٫", ".");
-  if (!/^-?\d*(\.\d*)?$/.test(s) || s === "-" || s === ".") throw new Error(`قيمة رقمية غير صالحة: ${input}`);
+  const s = String(input)
+    .trim()
+    .replace(/[٬,\s]/g, "")
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)))
+    .replace("٫", ".");
+  if (!/^-?\d*(\.\d*)?$/.test(s) || s === "-" || s === ".")
+    throw new Error(`قيمة رقمية غير صالحة: ${input}`);
   const neg = s.startsWith("-");
   const [intPart = "0", frac = ""] = s.replace("-", "").split(".");
   const fracPadded = (frac + "0".repeat(SCALE + 1)).slice(0, SCALE + 1);

@@ -27,12 +27,15 @@ export function checkPublishableKey(key: string | undefined | null): KeyCheck {
   const payload = decodeJwtPayload(k);
   if (!payload) return { ok: false, reason: "missing" };
   if (payload.role === "service_role") return { ok: false, reason: "service_role" };
-  if (payload.ref && payload.ref !== FIELD_SALES_PROJECT_REF) return { ok: false, reason: "wrong_project" };
+  if (payload.ref && payload.ref !== FIELD_SALES_PROJECT_REF)
+    return { ok: false, reason: "wrong_project" };
   return { ok: true, key: k };
 }
 
 export function getKeyCheck(): KeyCheck {
-  return checkPublishableKey(import.meta.env.VITE_FIELD_SALES_PUBLISHABLE_KEY as string | undefined);
+  return checkPublishableKey(
+    import.meta.env.VITE_FIELD_SALES_PUBLISHABLE_KEY as string | undefined,
+  );
 }
 
 export const KEY_REASON_TEXT: Record<Exclude<KeyCheck, { ok: true }>["reason"], string> = {

@@ -9,6 +9,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { Analytics } from "@vercel/analytics/react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -96,7 +97,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/volta-icon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
@@ -117,6 +121,7 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Analytics />
         <Scripts />
       </body>
     </html>
@@ -127,9 +132,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    const register = () => { void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => console.error("VOLTA service worker registration failed", error)); };
+    const register = () => {
+      void navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .catch((error) => console.error("VOLTA service worker registration failed", error));
+    };
     if (document.readyState === "complete") register();
-    else { window.addEventListener("load", register, { once: true }); return () => window.removeEventListener("load", register); }
+    else {
+      window.addEventListener("load", register, { once: true });
+      return () => window.removeEventListener("load", register);
+    }
   }, []);
 
   return (
