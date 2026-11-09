@@ -40,6 +40,8 @@ function Setup() {
       const error = await signIn(identifier, pw);
       setMsg(error);
       if (!error) setPw("");
+    } catch {
+      setMsg("حدث خطأ غير متوقع أثناء تسجيل الدخول. أعد المحاولة.");
     } finally {
       setBusy(false);
     }
@@ -62,6 +64,8 @@ function Setup() {
         setOtp("");
         setOtpSent(true);
       }
+    } catch {
+      setMsg("تعذر طلب رمز التحقق حالياً. تحقق من الاتصال ثم أعد المحاولة.");
     } finally {
       setBusy(false);
     }
@@ -75,6 +79,8 @@ function Setup() {
       const error = await verifyWhatsAppOtp(otpPhone, otp);
       setMsg(error ?? "تم التحقق بنجاح. جارٍ تحميل صلاحيات حسابك.");
       if (!error) setOtp("");
+    } catch {
+      setMsg("تعذر التحقق من الرمز حالياً. تحقق من الاتصال ثم أعد المحاولة.");
     } finally {
       setBusy(false);
     }
