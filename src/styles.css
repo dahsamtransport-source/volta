@@ -75,13 +75,21 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-feature-settings: "tnum";
-    background-image: radial-gradient(1200px 500px at 100% -10%, oklch(0.93 0.03 165 / 55%), transparent 60%);
+    background-image: radial-gradient(
+      1200px 500px at 100% -10%,
+      oklch(0.93 0.03 165 / 55%),
+      transparent 60%
+    );
     background-attachment: fixed;
   }
 }
@@ -100,9 +108,25 @@
   unicode-bidi: isolate;
 }
 
-@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@utility animate-rise { animation: rise 0.28s ease-out both; }
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@utility animate-rise {
+  animation: rise 0.28s ease-out both;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
