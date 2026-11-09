@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   Activity, AlertTriangle, ArrowLeft, Boxes, Building2, CalendarClock,
- CheckCircle2, ClipboardList, Droplets, Fuel, Gauge,
+  CheckCircle2, ClipboardList, Fuel, Gauge,
   MapPinned, Package, RefreshCw, ShieldCheck, Sun, Users, Wifi, WifiOff,
 } from "lucide-react";
 import {
@@ -258,7 +258,7 @@ function CommandCenterContent() {
     <div className={"volta-command-center space-y-4 rounded-3xl p-3 text-white sm:p-4 lg:p-5 " + (fieldMode ? "field-mode" : "")}>
       {!online && (
         <div className="flex items-center gap-2 rounded-xl border border-slate-400/20 bg-slate-500/15 px-3 py-2.5 text-xs text-slate-200">
-          <WifiOff className="size-4" /> وضع دون اتصال — البيانات المعروضة هي آخر نسخة مخزنة من جلسة التطبيق، ولن تُنفذ عمليات خادمية حتى يعود الاتصال.
+          <WifiOff className="size-4" /> وضع دون اتصال — لن تتحدث البيانات من الخادم حالياً، ولن تُرسل أي عملية خادمية حتى يعود الاتصال.
         </div>
       )}
       <section className="vc-hero relative overflow-hidden rounded-3xl border p-5 md:p-7">
@@ -320,7 +320,7 @@ function CommandCenterContent() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,.8fr)]">
-            <Panel title="نشاط الزيارات" subtitle="مخطط مبني على أوقات الزيارات والمبيعات المسجلة فعلياً في آخر سبعة أيام." action={<span className="text-[10px] text-slate-400">آخر تحديث {new Intl.DateTimeFormat("ar-YE", { hour: "2-digit", minute: "2-digit" }).format(new Date(data.updatedAt))}</span>}>
+            <Panel title="نشاط الزيارات" subtitle="اتجاه مبني على أحدث 500 سجل من الزيارات والمبيعات خلال سبعة أيام؛ المؤشرات الرقمية أعلاه تعتمد عدّادات قاعدة البيانات الدقيقة." action={<span className="text-[10px] text-slate-400">آخر تحديث {new Intl.DateTimeFormat("ar-YE", { hour: "2-digit", minute: "2-digit" }).format(new Date(data.updatedAt))}</span>}>
               <div className="h-60 min-w-0">
                 {data.trendAvailable ? <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.trend} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
