@@ -28,9 +28,15 @@ describe("Yemeni phone normalization", () => {
     expect(normalizeYemenPhone("+967 773 934 270")).toBe("+967773934270");
     expect(normalizeYemenPhone("00967774068936")).toBe("+967774068936");
   });
-  it("rejects invalid numbers and email identifiers", () => {
+  it("normalizes Arabic-Indic digits", () => {
+    expect(normalizeYemenPhone("٧٧٣٩٣٤٢٧٠")).toBe("+967773934270");
+  });
+  it("rejects invalid numbers, email identifiers and ambiguous input", () => {
     expect(normalizeYemenPhone("12345")).toBeNull();
     expect(normalizeYemenPhone("user@example.com")).toBeNull();
+    expect(normalizeYemenPhone("abc 773934270")).toBeNull();
+    expect(normalizeYemenPhone("++967773934270")).toBeNull();
+    expect(normalizeYemenPhone("+773934270")).toBeNull();
   });
 });
 
