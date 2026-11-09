@@ -1,12 +1,12 @@
 import {
-  LayoutDashboard, Store, MapPinned, Users, CalendarCheck, Target, Package, FileText,
+  LayoutDashboard, Gauge, Store, MapPinned, Users, CalendarCheck, Target, Package, FileText,
   Receipt, RefreshCw, ScrollText, BarChart3, ShieldCheck, Settings2, type LucideIcon,
 } from "lucide-react";
 import type { FieldSalesTable } from "@/data/client";
 import type { Capability } from "@/lib/auth/roles";
 
 export interface ModuleDef {
-  path: "/" | "/establishments" | "/districts" | "/representatives" | "/visits" | "/opportunities" | "/products" | "/quotes" | "/sales" | "/sync" | "/audit" | "/reports" | "/admin" | "/setup";
+  path: "/" | "/command-center" | "/establishments" | "/districts" | "/representatives" | "/visits" | "/opportunities" | "/products" | "/quotes" | "/sales" | "/sync" | "/audit" | "/reports" | "/admin" | "/setup";
   label: string;
   en: string;
   icon: LucideIcon;
@@ -18,6 +18,7 @@ export interface ModuleDef {
 
 export const MODULES: ModuleDef[] = [
   { path: "/", label: "نظرة عامة", en: "Overview", icon: LayoutDashboard, group: "ops", description: "مؤشرات الأداء الميدانية" },
+  { path: "/command-center", label: "مركز القيادة", en: "Command center", icon: Gauge, group: "ops", description: "لوحة القيادة الصناعية للعمليات الميدانية" },
   { path: "/establishments", label: "المنشآت", en: "Establishments", icon: Store, group: "ops", table: "establishments", description: "إدارة علاقات المنشآت والعملاء" },
   { path: "/visits", label: "الزيارات", en: "Visits", icon: CalendarCheck, group: "ops", table: "visits", description: "تخطيط وتسجيل الزيارات الميدانية" },
   { path: "/opportunities", label: "الفرص", en: "Opportunities", icon: Target, group: "ops", table: "opportunities", description: "مسار الفرص البيعية" },
