@@ -29,6 +29,6 @@ Supabase currently documents WhatsApp OTP channel support for Twilio and Twilio 
 
 ## Current schema mapping and rollout blockers
 
-The live `field_sales.user_profiles` constraint currently permits only `manager` and `representative`. In the app, `admin` and `supervisor` may be distinguished through trusted `app_metadata.field_sales_role`, while both map to the database's `manager` profile class for current RLS. Do not create a `supervisor` database role without a reviewed migration of the role constraint and policies.
+The live `field_sales.user_profiles` constraint currently permits only `manager` and `representative`. The database helper `field_sales.is_manager()` returns true for every active `manager` profile, and multiple RLS policies use it to grant broad management access. Therefore, **never provision a supervisor as a database `manager`** merely because the application has a `supervisor` UI role. Client-side capability checks are not a substitute for RLS. Until a reviewed migration adds a separate `supervisor` profile and role-specific RLS policies, only the administrator may use the `manager` profile; supervisor onboarding remains blocked.
 
 The live `representatives` table currently contains a representative row using phone `773934270`, which is also the requested supervisor phone. Resolve this identity conflict before assigning that number to a supervisor or creating another representative account. Do not overwrite or reassign the existing record automatically.
