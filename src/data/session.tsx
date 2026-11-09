@@ -45,9 +45,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     // Subscribe before the one-off lookup. A slow getUser() response must not
     // overwrite a newer SIGNED_OUT/SIGNED_IN event.
-    const { data: sub } = c.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = c.auth.onAuthStateChange((event, session) => {
       if (!active) return;
-      authEventReceived = true;
+      // INITIAL_SESSION is only the cached browser session; getUser() still
+      // validates it with Auth. Later events must win over that lookup.
+      if (event !== "INITIAL_SESSION") authEventReceived = true;
       setUser(session?.user ?? null);
       setLoading(false);
     });
