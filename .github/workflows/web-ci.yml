@@ -1,8 +1,10 @@
 name: VOLTA Web CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
+      - main
       - fix/volta-reliability-20261108
       - recovery/import-lovable-source
   pull_request:
@@ -26,7 +28,7 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Format and lint changed screens
         run: |
-          bunx prettier --write src/components/data/VisitCapture.tsx src/routes/visits.tsx
+          bunx prettier --check src/components/data/VisitCapture.tsx src/routes/visits.tsx
           bunx eslint src/components/data/VisitCapture.tsx src/routes/visits.tsx
       - name: Unit tests
         run: bun run test
