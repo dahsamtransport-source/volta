@@ -26,8 +26,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Format and lint changed screens
         run: |
-          bunx prettier --write src/components/data/VisitCapture.tsx src/routes/visits.tsx
-          bunx eslint src/components/data/VisitCapture.tsx src/routes/visits.tsx
+          bunx prettier --write src/components/data/VisitCapture.tsx src/routes/visits.tsx src/routes/command-center.tsx src/app/modules.ts src/test/command-center.test.ts
+          bunx eslint src/components/data/VisitCapture.tsx src/routes/visits.tsx src/routes/command-center.tsx src/app/modules.ts src/test/command-center.test.ts
       - name: Unit tests
         run: bun run test
       - name: Production build

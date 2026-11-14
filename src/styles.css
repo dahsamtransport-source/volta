@@ -164,3 +164,103 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
+
+
+/* VOLTA industrial command center — scoped dark visual system */
+body:has(.volta-command-center) {
+  color-scheme: dark;
+  background: #0A192F;
+  color: #F8FAFC;
+}
+body:has(.volta-command-center) header {
+  background: rgba(10, 25, 47, .92) !important;
+  color: #F8FAFC;
+  border-color: rgba(255,255,255,.1);
+}
+body:has(.volta-command-center) header input {
+  background: rgba(30,41,59,.85);
+  color: #F8FAFC;
+  border-color: rgba(255,255,255,.14);
+}
+body:has(.volta-command-center) header input::placeholder { color: #B8C7D9; }
+body:has(.volta-command-center) header .text-primary { color: #00AEEF !important; }
+body:has(.volta-command-center) .mobile-quick-nav {
+  background: rgba(15,37,61,.96) !important;
+  border-color: rgba(255,255,255,.16) !important;
+  color: #F8FAFC;
+}
+body:has(.volta-command-center) .mobile-quick-nav a:not(.bg-primary) { color: #B8C7D9; }
+.volta-command-center {
+  --vc-navy: #0A192F;
+  --vc-panel: rgba(30,41,59,.76);
+  color: #F8FAFC;
+  background:
+    radial-gradient(ellipse at 88% 0%, rgba(0,174,239,.10), transparent 38%),
+    radial-gradient(ellipse at 0% 72%, rgba(245,158,11,.06), transparent 30%),
+    #0A192F;
+}
+.vc-hero {
+  background: linear-gradient(115deg,#0D223D 0%,#102C4A 58%,#163957 100%);
+  box-shadow: 0 16px 44px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.09);
+  isolation: isolate;
+}
+.vc-hero-orb {
+  position:absolute; width:18rem; height:18rem; inset-inline-end:8%; top:-12rem;
+  border-radius:999px; pointer-events:none;
+  background:radial-gradient(circle,rgba(0,174,239,.24),transparent 68%);
+  filter:blur(3px);
+}
+.vc-panel,.vc-kpi {
+  border-color:rgba(255,255,255,.11);
+  background:var(--vc-panel);
+  box-shadow:0 12px 34px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(16px);
+}
+.vc-kpi { transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
+.vc-kpi:hover {
+  border-color:rgba(0,174,239,.38);
+  box-shadow:0 16px 34px rgba(0,0,0,.2),0 0 18px rgba(0,174,239,.12);
+}
+.vc-kpi-icon { display:grid; width:2.6rem; height:2.6rem; place-items:center; border-radius:.9rem; }
+.vc-kpi-blue { color:#8ADFFF; background:rgba(0,174,239,.13); }
+.vc-kpi-gold { color:#FFD27A; background:rgba(245,158,11,.14); }
+.vc-kpi-green { color:#86E7BB; background:rgba(16,185,129,.13); }
+.vc-kpi-red { color:#FDA4AF; background:rgba(244,63,94,.14); }
+.vc-map {
+  background:
+    radial-gradient(ellipse at 30% 40%,rgba(0,174,239,.10),transparent 36%),
+    #0B2038;
+  border-color:rgba(255,255,255,.12);
+}
+.vc-bottle-wrap {
+  filter:drop-shadow(0 12px 18px rgba(0,0,0,.25));
+}
+.vc-empty { border-color:rgba(255,255,255,.18); background:rgba(15,35,57,.5); }
+.vc-action {
+  display:flex; min-height:4.35rem; align-items:center; gap:.8rem;
+  border:1px solid rgba(255,255,255,.12); border-radius:1rem;
+  background:rgba(30,41,59,.7); padding:.85rem 1rem;
+  color:#8ADFFF; transition:transform .18s ease,border-color .18s ease,background .18s ease;
+}
+.vc-action:hover { transform:translateY(-2px); border-color:rgba(0,174,239,.4); background:rgba(30,55,78,.9); }
+.vc-action span { min-width:0; display:flex; flex:1; flex-direction:column; gap:.2rem; }
+.vc-action b { color:#F8FAFC; font-size:.75rem; }
+.vc-action small { color:#B8C7D9; font-size:.65rem; }
+.volta-command-center.field-mode .vc-panel,
+.volta-command-center.field-mode .vc-kpi,
+.volta-command-center.field-mode .vc-action {
+  background:rgba(39,57,77,.96);
+  border-color:rgba(255,255,255,.26);
+}
+.volta-command-center.field-mode .text-slate-400 { color:#E2E8F0 !important; }
+.volta-command-center.field-mode .text-slate-300 { color:#F1F5F9 !important; }
+.volta-command-center.field-mode .vc-hero { filter:brightness(1.18) contrast(1.08); }
+.volta-command-center :focus-visible { outline:2px solid #7DD3FC; outline-offset:3px; }
+@media (max-width:640px) {
+  .volta-command-center { border-radius:1.25rem; padding:.65rem; }
+  .vc-kpi { padding:.8rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .vc-kpi,.vc-action { transition:none !important; }
+  .vc-kpi:hover,.vc-action:hover { transform:none !important; }
+}
