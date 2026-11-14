@@ -71,7 +71,7 @@ export function VisitCapture() {
     try {
       const rows = await getQueue().list();
       const visits = rows.filter(
-        (item) => item.table === "visits" && item.payload.__owner_user_id === ownerUserId,
+        (item) => item.table === "visits" && item.payload["__owner_user_id"] === ownerUserId,
       );
       setPendingCount(visits.filter((item) => item.status === "pending").length);
       setConflictCount(
@@ -175,8 +175,8 @@ export function VisitCapture() {
           const { data } = await client
             .from("visits")
             .select("id")
-            .eq("device_id", String(payload.device_id))
-            .eq("idempotency_key", String(payload.idempotency_key))
+            .eq("device_id", String(payload["device_id"]))
+            .eq("idempotency_key", String(payload["idempotency_key"]))
             .maybeSingle();
           if (data) {
             await getQueue().discard(item.idempotencyKey);
@@ -283,9 +283,9 @@ export function VisitCapture() {
       };
 
       if (gps) {
-        payload.latitude = gps.latitude;
-        payload.longitude = gps.longitude;
-        payload.gps_accuracy_m = gps.accuracy;
+        payload["latitude"] = gps.latitude;
+        payload["longitude"] = gps.longitude;
+        payload["gps_accuracy_m"] = gps.accuracy;
       }
 
       const accepted = await getQueue().enqueue({
