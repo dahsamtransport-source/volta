@@ -25,7 +25,7 @@ export function TableScreen({ table, emptyLabel }: { table: FieldSalesTable; emp
 
   const q = useQuery({
     queryKey: ["fs", table, page, column, term],
-    queryFn: () => fetchPage({ table, page, pageSize: PAGE_SIZE, search: column && term ? { column, term } : undefined }),
+    queryFn: () => fetchPage({ table, page, pageSize: PAGE_SIZE, ...(column && term ? { search: { column, term } } : {}) }),
     placeholderData: keepPreviousData,
   });
 
@@ -59,7 +59,7 @@ export function TableScreen({ table, emptyLabel }: { table: FieldSalesTable; emp
             </thead>
             <tbody>
               {q.data.rows.map((r, i) => (
-                <tr key={String(r.id ?? i)} onClick={() => setSelected(r)} className="cursor-pointer border-t hover:bg-accent/40 focus-within:bg-accent/40">
+                <tr key={String(r["id"] ?? i)} onClick={() => setSelected(r)} className="cursor-pointer border-t hover:bg-accent/40 focus-within:bg-accent/40">
                   {columns.map((c) => <td key={c} className="max-w-64 truncate whitespace-nowrap px-3 py-1.5">{cell(r[c])}</td>)}
                 </tr>
               ))}

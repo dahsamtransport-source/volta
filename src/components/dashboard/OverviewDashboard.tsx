@@ -123,7 +123,7 @@ const VALUE_KEY: Record<(typeof KPI_CARDS)[number]["key"], keyof DashboardMetric
 function MetricCard({ card, value, trend }: {
   card: (typeof KPI_CARDS)[number];
   value: number | null;
-  trend?: number[];
+  trend?: number[] | undefined;
 }) {
   const Icon = card.icon;
   return (

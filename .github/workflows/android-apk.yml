@@ -12,6 +12,7 @@ on:
       - ".github/workflows/android-apk.yml"
   pull_request:
     branches:
+      - main
       - recovery/import-lovable-source
     paths:
       - "android/**"

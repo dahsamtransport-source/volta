@@ -11,7 +11,9 @@ function decodeJwtPayload(key: string): Record<string, unknown> | null {
   const parts = key.split(".");
   if (parts.length !== 3) return null;
   try {
-    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const segment = parts[1];
+    if (!segment) return null;
+    const b64 = segment.replace(/-/g, "+").replace(/_/g, "/");
     return JSON.parse(atob(b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), "=")));
   } catch {
     return null;
@@ -26,13 +28,13 @@ export function checkPublishableKey(key: string | undefined | null): KeyCheck {
   if (k.startsWith("sb_publishable_")) return { ok: true, key: k };
   const payload = decodeJwtPayload(k);
   if (!payload) return { ok: false, reason: "missing" };
-  if (payload.role === "service_role") return { ok: false, reason: "service_role" };
-  if (payload.ref && payload.ref !== FIELD_SALES_PROJECT_REF) return { ok: false, reason: "wrong_project" };
+  if (payload["role"] === "service_role") return { ok: false, reason: "service_role" };
+  if (payload["ref"] && payload["ref"] !== FIELD_SALES_PROJECT_REF) return { ok: false, reason: "wrong_project" };
   return { ok: true, key: k };
 }
 
 export function getKeyCheck(): KeyCheck {
-  return checkPublishableKey(import.meta.env.VITE_FIELD_SALES_PUBLISHABLE_KEY as string | undefined);
+  return checkPublishableKey(import.meta.env["VITE_FIELD_SALES_PUBLISHABLE_KEY"] as string | undefined);
 }
 
 export const KEY_REASON_TEXT: Record<Exclude<KeyCheck, { ok: true }>["reason"], string> = {

@@ -13,14 +13,15 @@ export const FIELD_SALES_TABLES = [
 export type FieldSalesTable = (typeof FIELD_SALES_TABLES)[number];
 export type Row = Record<string, unknown>;
 
-let client: SupabaseClient | null = null;
+type FieldSalesClient = SupabaseClient<any, "field_sales">;
+let client: FieldSalesClient | null = null;
 
-export function getClient(): SupabaseClient | null {
+export function getClient(): FieldSalesClient | null {
   if (typeof window === "undefined") return null;
   const k = getKeyCheck();
   if (!k.ok) return null;
   if (!client) {
-    client = createClient(FIELD_SALES_URL, k.key, {
+    client = createClient<any, "field_sales">(FIELD_SALES_URL, k.key, {
       db: { schema: FIELD_SALES_SCHEMA },
       auth: { persistSession: true, autoRefreshToken: true, storageKey: "lahj-field-sales-auth" },
     });

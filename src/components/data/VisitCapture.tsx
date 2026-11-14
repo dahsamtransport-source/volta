@@ -70,9 +70,13 @@ export function VisitCapture() {
   const refreshQueueCounts = useCallback(async () => {
     try {
       const rows = await getQueue().list();
-      const visits = rows.filter((item) => item.table === "visits" && item.payload.__owner_user_id === ownerUserId);
+      const visits = rows.filter(
+        (item) => item.table === "visits" && item.payload["__owner_user_id"] === ownerUserId,
+      );
       setPendingCount(visits.filter((item) => item.status === "pending").length);
-      setConflictCount(visits.filter((item) => item.status === "conflict" || item.status === "failed").length);
+      setConflictCount(
+        visits.filter((item) => item.status === "conflict" || item.status === "failed").length,
+      );
     } catch {
       setLookupMessage("تعذر فتح مخزن العمليات المحلية على هذا الجهاز.");
     }
@@ -93,7 +97,11 @@ export function VisitCapture() {
 
     const client = getClient();
     if (!client || !navigator.onLine) {
-      setLookupMessage(cachedEstablishments.length ? "تُستخدم قائمة المنشآت المحفوظة على هذا الجهاز." : "اتصل بالإنترنت مرة واحدة لتحميل قائمة المنشآت قبل تسجيل الزيارة دون اتصال.");
+      setLookupMessage(
+        cachedEstablishments.length
+          ? "تُستخدم قائمة المنشآت المحفوظة على هذا الجهاز."
+          : "اتصل بالإنترنت مرة واحدة لتحميل قائمة المنشآت قبل تسجيل الزيارة دون اتصال.",
+      );
       return;
     }
 
@@ -104,7 +112,11 @@ export function VisitCapture() {
       .limit(1000);
 
     const representativeQuery = isManager
-      ? client.from("representatives").select("id,employee_code,full_name").eq("is_active", true).order("full_name")
+      ? client
+          .from("representatives")
+          .select("id,employee_code,full_name")
+          .eq("is_active", true)
+          .order("full_name")
       : Promise.resolve({ data: null, error: null });
 
     const [establishmentResult, representativeResult] = await Promise.all([
@@ -136,11 +148,16 @@ export function VisitCapture() {
     syncLock.current = true;
     try {
       const items = await getQueue().list();
-      const pending = items.filter((item) => item.table === "visits" && item.op === "insert" && item.status === "pending");
+      const pending = items.filter(
+        (item) => item.table === "visits" && item.op === "insert" && item.status === "pending",
+      );
       for (const item of pending) {
         const { __owner_user_id: queueOwnerId, ...payload } = item.payload;
         if (typeof queueOwnerId !== "string") {
-          await getQueue().markConflict(item.idempotencyKey, "تعذر التحقق من مالك هذه العملية المحلية؛ لم تُرسل إلى الخادم.");
+          await getQueue().markConflict(
+            item.idempotencyKey,
+            "تعذر التحقق من مالك هذه العملية المحلية؛ لم تُرسل إلى الخادم.",
+          );
           continue;
         }
         if (queueOwnerId !== ownerUserId) {
@@ -158,14 +175,17 @@ export function VisitCapture() {
           const { data } = await client
             .from("visits")
             .select("id")
-            .eq("device_id", String(payload.device_id))
-            .eq("idempotency_key", String(payload.idempotency_key))
+            .eq("device_id", String(payload["device_id"]))
+            .eq("idempotency_key", String(payload["idempotency_key"]))
             .maybeSingle();
           if (data) {
             await getQueue().discard(item.idempotencyKey);
             continue;
           }
-          await getQueue().markConflict(item.idempotencyKey, "تعذر التحقق من العملية المكررة على الخادم.");
+          await getQueue().markConflict(
+            item.idempotencyKey,
+            "تعذر التحقق من العملية المكررة على الخادم.",
+          );
           continue;
         }
 
@@ -188,7 +208,10 @@ export function VisitCapture() {
     void refreshQueueCounts();
     void syncPending();
 
-    const onOnline = () => { void syncPending(); void loadLookups(); };
+    const onOnline = () => {
+      void syncPending();
+      void loadLookups();
+    };
     const onVisible = () => {
       if (document.visibilityState === "visible") void syncPending();
     };
@@ -219,7 +242,8 @@ export function VisitCapture() {
         });
         setMessage("تم التقاط الموقع بعد منح الإذن. سيُرسل مع الزيارة.");
       },
-      (error) => setMessage(error.message || "تعذر تحديد الموقع؛ يمكنك تسجيل الزيارة دون إحداثيات."),
+      (error) =>
+        setMessage(error.message || "تعذر تحديد الموقع؛ يمكنك تسجيل الزيارة دون إحداثيات."),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     );
   };
@@ -259,9 +283,9 @@ export function VisitCapture() {
       };
 
       if (gps) {
-        payload.latitude = gps.latitude;
-        payload.longitude = gps.longitude;
-        payload.gps_accuracy_m = gps.accuracy;
+        payload["latitude"] = gps.latitude;
+        payload["longitude"] = gps.longitude;
+        payload["gps_accuracy_m"] = gps.accuracy;
       }
 
       const accepted = await getQueue().enqueue({
@@ -279,9 +303,11 @@ export function VisitCapture() {
       setContactPerson("");
       setNotes("");
       setGps(null);
-      setMessage(navigator.onLine
-        ? "حُفظت الزيارة محلياً، وجارٍ إرسالها وفق صلاحيات قاعدة البيانات."
-        : "حُفظت الزيارة على الجهاز. ستتم محاولة المزامنة عند عودة الاتصال وفتح التطبيق.");
+      setMessage(
+        navigator.onLine
+          ? "حُفظت الزيارة محلياً، وجارٍ إرسالها وفق صلاحيات قاعدة البيانات."
+          : "حُفظت الزيارة على الجهاز. ستتم محاولة المزامنة عند عودة الاتصال وفتح التطبيق.",
+      );
       await refreshQueueCounts();
       if (navigator.onLine) await syncPending();
     } catch (error) {
@@ -297,22 +323,39 @@ export function VisitCapture() {
     <section className="glass-panel space-y-3 p-4" aria-labelledby="visit-capture-title">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 id="visit-capture-title" className="text-base font-semibold">تسجيل زيارة ميدانية</h2>
-          <p className="text-xs text-muted-foreground">تُحفظ العملية محلياً أولاً ثم تُرسل مع مفتاح منع التكرار.</p>
+          <h2 id="visit-capture-title" className="text-base font-semibold">
+            تسجيل زيارة ميدانية
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            تُحفظ العملية محلياً أولاً ثم تُرسل مع مفتاح منع التكرار.
+          </p>
         </div>
         <div className="flex gap-2 text-xs">
           <span className="rounded-full border px-2 py-1">{online ? "متصل" : "دون اتصال"}</span>
           <span className="rounded-full border px-2 py-1">بانتظار المزامنة: {pendingCount}</span>
-          {conflictCount > 0 && <span className="rounded-full border px-2 py-1 text-destructive">تحتاج مراجعة: {conflictCount}</span>}
+          {conflictCount > 0 && (
+            <span className="rounded-full border px-2 py-1 text-destructive">
+              تحتاج مراجعة: {conflictCount}
+            </span>
+          )}
         </div>
       </div>
 
       {isManager && (
         <label className="block space-y-1 text-sm">
           <span>المندوب</span>
-          <select value={representativeId} onChange={(event) => setRepresentativeId(event.target.value)} className="h-10 w-full rounded-md border bg-background px-3" required>
+          <select
+            value={representativeId}
+            onChange={(event) => setRepresentativeId(event.target.value)}
+            className="h-10 w-full rounded-md border bg-background px-3"
+            required
+          >
             <option value="">اختر المندوب</option>
-            {representatives.map((rep) => <option key={rep.id} value={rep.id}>{rep.full_name} — {rep.employee_code}</option>)}
+            {representatives.map((rep) => (
+              <option key={rep.id} value={rep.id}>
+                {rep.full_name} — {rep.employee_code}
+              </option>
+            ))}
           </select>
         </label>
       )}
@@ -320,52 +363,115 @@ export function VisitCapture() {
       <form onSubmit={saveVisit} className="grid gap-3 md:grid-cols-2">
         <label className="block space-y-1 text-sm md:col-span-2">
           <span>المنشأة</span>
-          <select value={establishmentId} onChange={(event) => setEstablishmentId(event.target.value)} className="h-10 w-full rounded-md border bg-background px-3" required>
+          <select
+            value={establishmentId}
+            onChange={(event) => setEstablishmentId(event.target.value)}
+            className="h-10 w-full rounded-md border bg-background px-3"
+            required
+          >
             <option value="">اختر المنشأة</option>
-            {establishments.map((item) => <option key={item.id} value={item.id}>{item.name} — {item.code}</option>)}
+            {establishments.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} — {item.code}
+              </option>
+            ))}
           </select>
         </label>
 
         <label className="block space-y-1 text-sm">
           <span>نتيجة الزيارة</span>
-          <select value={outcome} onChange={(event) => setOutcome(event.target.value as (typeof OUTCOMES)[number]["value"])} className="h-10 w-full rounded-md border bg-background px-3">
-            {OUTCOMES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+          <select
+            value={outcome}
+            onChange={(event) =>
+              setOutcome(event.target.value as (typeof OUTCOMES)[number]["value"])
+            }
+            className="h-10 w-full rounded-md border bg-background px-3"
+          >
+            {OUTCOMES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
           </select>
         </label>
 
         <label className="block space-y-1 text-sm">
           <span>الشخص الذي تم التواصل معه</span>
-          <input value={contactPerson} onChange={(event) => setContactPerson(event.target.value)} maxLength={160} className="h-10 w-full rounded-md border bg-background px-3" />
+          <input
+            value={contactPerson}
+            onChange={(event) => setContactPerson(event.target.value)}
+            maxLength={160}
+            className="h-10 w-full rounded-md border bg-background px-3"
+          />
         </label>
 
         <label className="block space-y-1 text-sm md:col-span-2">
           <span>ملاحظات الزيارة</span>
-          <textarea value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={4000} rows={3} className="w-full rounded-md border bg-background px-3 py-2" />
+          <textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            maxLength={4000}
+            rows={3}
+            className="w-full rounded-md border bg-background px-3 py-2"
+          />
         </label>
 
         <div className="flex flex-wrap items-center gap-2 md:col-span-2">
-          <button type="button" onClick={captureLocation} className="rounded-md border px-3 py-2 text-sm">
+          <button
+            type="button"
+            onClick={captureLocation}
+            className="rounded-md border px-3 py-2 text-sm"
+          >
             {gps ? "تم إرفاق الموقع" : "إرفاق موقعي بموافقتي"}
           </button>
-          {gps && <span className="text-xs text-muted-foreground">دقة تقريبية: {Math.round(gps.accuracy)} متر</span>}
-          <button type="submit" disabled={busy || !establishmentId || !(ownRepresentativeId || representativeId)} className="ms-auto rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">
+          {gps && (
+            <span className="text-xs text-muted-foreground">
+              دقة تقريبية: {Math.round(gps.accuracy)} متر
+            </span>
+          )}
+          <button
+            type="submit"
+            disabled={busy || !establishmentId || !(ownRepresentativeId || representativeId)}
+            className="ms-auto rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
+          >
             {busy ? "جارٍ الحفظ…" : "حفظ الزيارة"}
           </button>
         </div>
       </form>
 
-      {lookupMessage && <p className="text-xs text-muted-foreground" role="status">{lookupMessage}</p>}
-      {message && <p className="text-sm" role="status">{message}</p>}
+      {lookupMessage && (
+        <p className="text-xs text-muted-foreground" role="status">
+          {lookupMessage}
+        </p>
+      )}
+      {message && (
+        <p className="text-sm" role="status">
+          {message}
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => void syncPending()} disabled={!online || busy || pendingCount === 0} className="rounded-md border px-3 py-1.5 text-xs disabled:opacity-50">
+        <button
+          type="button"
+          onClick={() => void syncPending()}
+          disabled={!online || busy || pendingCount === 0}
+          className="rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
           مزامنة الآن
         </button>
-        <button type="button" onClick={() => void loadLookups()} disabled={!online} className="rounded-md border px-3 py-1.5 text-xs disabled:opacity-50">
+        <button
+          type="button"
+          onClick={() => void loadLookups()}
+          disabled={!online}
+          className="rounded-md border px-3 py-1.5 text-xs disabled:opacity-50"
+        >
           تحديث القوائم
         </button>
       </div>
       {conflictCount > 0 && (
-        <p className="text-xs text-destructive">توجد عمليات رفضتها قاعدة البيانات أو تعذر التحقق منها. لم نحذفها؛ راجع سجل المزامنة قبل إعادة المحاولة.</p>
+        <p className="text-xs text-destructive">
+          توجد عمليات رفضتها قاعدة البيانات أو تعذر التحقق منها. لم نحذفها؛ راجع سجل المزامنة قبل
+          إعادة المحاولة.
+        </p>
       )}
     </section>
   );
