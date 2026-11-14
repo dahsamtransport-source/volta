@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local Graphify knowledge graphs and isolated Python environment
+graphify-out/
+.graphify-venv/
