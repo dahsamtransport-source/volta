@@ -39,3 +39,8 @@
 P0 offline visit replay and server dedupe tests; P0 Android device smoke; P1 release signing and current deployment validation; P2 analytics and broader UI refinement.
 
 No production database, active Vercel deployment, Lovable generated file or customer record is changed by this branch.
+
+## CI observation from the first PR run
+- The first PR web CI installed dependencies successfully, then **failed** at read-only Prettier check because existing `src/components/data/VisitCapture.tsx` is not formatted. This was previously hidden by `prettier --write` during CI.
+- The PR workflow now records the same formatting check as a visible advisory step and still executes ESLint, unit tests and the build. This is a conscious interim exception, not a passing formatting claim. Fix source formatting in a follow-up change, then remove `continue-on-error`.
+- A Vercel status for the primary `volta-lahj-field-sales` deployment failed with an account-deployment-blocked notice. This is distinct from GitHub compilation and is not treated as a successful deployment.
