@@ -40,8 +40,10 @@ P0 offline visit replay and server dedupe tests; P0 Android device smoke; P1 rel
 
 No production database, active Vercel deployment, Lovable generated file or customer record is changed by this branch.
 
-## CI observation from the first PR run
-- The first PR web CI installed dependencies successfully, then **failed** at read-only Prettier check because existing `src/components/data/VisitCapture.tsx` is not formatted. This was previously hidden by `prettier --write` during CI.
-- The PR workflow now records the same formatting check as a visible advisory step and still executes ESLint, unit tests and the build. This is a conscious interim exception, not a passing formatting claim. Fix source formatting in a follow-up change, then remove `continue-on-error`.
-- The next PR web CI run still failed at ESLint because `prettier/prettier` enforces the same pre-existing formatting debt. The workflow now retains a separate advisory Prettier report and disables **only** that formatting ESLint rule on the two legacy screens while preserving all other blocking ESLint checks. This is temporary and must be reversed after formatting the source.
-- A Vercel status for the primary `volta-lahj-field-sales` deployment failed with an account-deployment-blocked notice. This is distinct from GitHub compilation and is not treated as a successful deployment.
+## CI root-cause analysis and source repair
+- Initial read-only Prettier failed on `src/components/data/VisitCapture.tsx` because the source was not formatted. Previously, CI ran `prettier --write` on the checked-out source and silently repaired it only inside the runner, leaving the repository unchanged.
+- Next, ESLint failed on the same legacy formatting debt because the `prettier/prettier` rule is enabled.
+- The isolated review branch now contains the actual Prettier-generated formatting commit for `VisitCapture.tsx`. The one-time formatter workflow used solely to produce that commit was removed after the source update.
+- `.github/workflows/web-ci.yml` is restored to **blocking** `prettier --check` and full ESLint on both screens, without `continue-on-error` or any rule override. Any success statement must wait for a fresh full CI run at the final PR head.
+- Android Debug APK builds have previously passed on the branch; this does not establish release signing or device readiness.
+- GitHub currently reports a failed Vercel status with an account-deployment-blocked link for `volta-lahj-field-sales`. The connected Pro team's project reports `live: false` even though historical Preview deployments are READY. Domain verification is not production publication. Investigate deployment eligibility, team ownership, duplicate project connections and production branch mapping before publishing.
