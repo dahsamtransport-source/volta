@@ -5,7 +5,7 @@ export const FIELD_SALES_SCHEMA = "field_sales";
 
 export type KeyCheck =
   | { ok: true; key: string }
-  | { ok: false; reason: "missing" | "secret_key" | "service_role" | "wrong_project" };
+  | { ok: false; reason: "missing" | "secret_key" | "service_role" | "wrong_project" | "invalid_role" };
 
 function decodeJwtPayload(key: string): Record<string, unknown> | null {
   const parts = key.split(".");
@@ -27,6 +27,7 @@ export function checkPublishableKey(key: string | undefined | null): KeyCheck {
   const payload = decodeJwtPayload(k);
   if (!payload) return { ok: false, reason: "missing" };
   if (payload.role === "service_role") return { ok: false, reason: "service_role" };
+  if (payload.role !== "anon") return { ok: false, reason: "invalid_role" };
   if (payload.ref && payload.ref !== FIELD_SALES_PROJECT_REF) return { ok: false, reason: "wrong_project" };
   return { ok: true, key: k };
 }
@@ -40,4 +41,5 @@ export const KEY_REASON_TEXT: Record<Exclude<KeyCheck, { ok: true }>["reason"], 
   secret_key: "تم رفض المفتاح: هذا مفتاح سري ولا يجوز استخدامه في المتصفح.",
   service_role: "تم رفض المفتاح: مفتاح service_role محظور في المتصفح.",
   wrong_project: "تم رفض المفتاح: لا يخص مشروع لحج زيوت.",
+  invalid_role: "تم رفض المفتاح: يجب أن يكون من نوع anon فقط.",
 };

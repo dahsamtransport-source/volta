@@ -44,6 +44,18 @@ describe("key guard", () => {
   it("rejects secret keys", () => expect(checkPublishableKey("sb_secret_x").ok).toBe(false));
   it("accepts publishable", () => expect(checkPublishableKey("sb_publishable_x").ok).toBe(true));
   it("rejects missing", () => expect(checkPublishableKey("").ok).toBe(false));
+  it("rejects legacy JWTs with authenticated role", () => {
+    const key = ["header", btoa(JSON.stringify({ role: "authenticated" })), "signature"].join(".");
+    expect(checkPublishableKey(key).ok).toBe(false);
+  });
+  it("rejects legacy JWTs with wrong Supabase ref", () => {
+    const key = ["header", btoa(JSON.stringify({ role: "anon", ref: "different-project" })), "signature"].join(".");
+    expect(checkPublishableKey(key).ok).toBe(false);
+  });
+  it("accepts legacy anon role for the configured project", () => {
+    const key = ["header", btoa(JSON.stringify({ role: "anon", ref: "dymxnmpaaobxoaowksoc" })), "signature"].join(".");
+    expect(checkPublishableKey(key).ok).toBe(true);
+  });
 });
 
 describe("offline queue", () => {
