@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { FIELD_SALES_SCHEMA, FIELD_SALES_URL, getKeyCheck } from "@/lib/config";
 
 /**
@@ -24,17 +24,21 @@ export const FIELD_SALES_TABLES = [
 export type FieldSalesTable = (typeof FIELD_SALES_TABLES)[number];
 export type Row = Record<string, unknown>;
 
-let client: SupabaseClient | null = null;
+function createFieldSalesClient(key: string) {
+  return createClient(FIELD_SALES_URL, key, {
+    db: { schema: FIELD_SALES_SCHEMA },
+    auth: { persistSession: true, autoRefreshToken: true, storageKey: "lahj-field-sales-auth" },
+  });
+}
+type FieldSalesClient = ReturnType<typeof createFieldSalesClient>;
+let client: FieldSalesClient | null = null;
 
-export function getClient(): SupabaseClient | null {
+export function getClient(): FieldSalesClient | null {
   if (typeof window === "undefined") return null;
   const k = getKeyCheck();
   if (!k.ok) return null;
   if (!client) {
-    client = createClient(FIELD_SALES_URL, k.key, {
-      db: { schema: FIELD_SALES_SCHEMA },
-      auth: { persistSession: true, autoRefreshToken: true, storageKey: "lahj-field-sales-auth" },
-    });
+    client = createFieldSalesClient(k.key);
   }
   return client;
 }

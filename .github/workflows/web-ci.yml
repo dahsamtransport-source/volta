@@ -29,6 +29,8 @@ jobs:
         run: bunx prettier --check src/components/data/VisitCapture.tsx src/routes/visits.tsx src/lib/offline/queue.ts src/test/core.test.ts
       - name: Lint project
         run: bun run lint
+      - name: TypeScript typecheck
+        run: bun x tsc --noEmit
       - name: Unit tests
         run: bun run test
       - name: Production build

@@ -92,9 +92,11 @@ describe("offline queue", () => {
     });
     await q.markConflict("visit-1", "RLS rejected the visit");
     const [item] = await new OfflineQueue(storage).list();
+    expect(item).toBeDefined();
+    if (!item) throw new Error("Queued visit was not found");
     expect(item.status).toBe("conflict");
     expect(item.error).toBe("RLS rejected the visit");
-    expect(item.payload.__owner_user_id).toBe("rep-one");
+    expect(item.payload["__owner_user_id"]).toBe("rep-one");
   });
   it("discarding an acknowledged operation leaves other queued work intact", async () => {
     const q = new OfflineQueue(new MemoryQueueStorage());
