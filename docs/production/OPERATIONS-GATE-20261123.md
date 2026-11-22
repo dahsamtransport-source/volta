@@ -7,7 +7,7 @@
 - No production deployment, schema changes, live test transactions, DNS edits or bypasses are authorized by this report.
 
 ## Confirmed
-- Graphify local structural extraction of the VOLTA repository: **895 nodes, 1,799 edges and 55 communities** across 108 classified source files, generated using pinned `graphifyy[sql]==0.9.108`. Report: local ignored `graphify-out/GRAPH_REPORT.md`; this is NOT the hosted Graphify index.
+- Graphify local structural extraction of the VOLTA repository after the latest TypeScript fixes: **896 nodes, 1,801 edges and 63 communities** across 108 classified source files, generated using pinned `graphifyy[sql]==0.9.108`. Report: local ignored `graphify-out/GRAPH_REPORT.md`; this is NOT the hosted Graphify index.
 - Supabase reports `ACTIVE_HEALTHY`; 19 business tables in `field_sales` have RLS enabled. Snapshot includes **1 establishment, 1 representative, 0 visits, 0 sales**; zero recorded rows are not evidence of zero physical activity.
 - Windows development device is reachable. Android release signing keystore and DPAPI-protected signing credentials exist outside Git; file hash matches saved metadata. No independent off-device recovery has been proven.
 - New offline IndexedDB change waits for transaction completion/abort before acknowledging persistence; memory-queue tests cover conflict retention and selective acknowledgement. Test execution: 19 Vitest tests passed locally (2026-11-23).
@@ -26,8 +26,9 @@
 ## Release acceptance matrix
 | Area | Status | Exit evidence |
 |---|---|---|
-| Web unit tests | PASS (19 tests) | Local Vitest output; PR CI confirmation required |
-| Full lint and web build | PENDING | CI success on PR head commit |
+| Web unit tests | PASS (19 tests) | Local Vitest and PR #18 CI success |
+| Strict TypeScript | PASS | `bun x tsc --noEmit` locally and GitHub CI run 45078506493 |
+| Full lint and web build | PASS (0 errors / 8 warnings) | GitHub CI run 45078506493 on 3a1381f |
 | Android debug | PASS (historical PR #17) | GitHub run 45029208660 |
 | Android signed release | PENDING | `apksigner verify`, release SHA-256 and retained signature fingerprint |
 | Vercel production/domain | FAIL | Re-enabled and responding with correct content over HTTPS |
