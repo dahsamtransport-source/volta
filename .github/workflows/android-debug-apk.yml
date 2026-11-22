@@ -24,10 +24,18 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # ubuntu-latest already provides an Android SDK. Avoid the setup-android@v3
+      # helper which currently asks sdkmanager for the removed legacy 'tools' package.
       - name: Install SDK 35 and build tools
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 4 -type f -name sdkmanager | head -n 1)"
+          if [[ -z "$sdkmanager_bin" ]]; then
+            echo '::error::Android SDK command line manager not present on runner.'
+            exit 1
+          fi
+          "$sdkmanager_bin" --install 'platforms;android-35' 'build-tools;35.0.0'
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
