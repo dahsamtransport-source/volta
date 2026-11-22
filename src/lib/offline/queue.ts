@@ -55,10 +55,31 @@ export class IndexedDbQueueStorage implements QueueStorage {
     fn: (s: IDBObjectStore) => IDBRequest<T>,
   ): Promise<T> {
     const db = await this.db();
-    return new Promise((res, rej) => {
-      const req = fn(db.transaction(STORE, mode).objectStore(STORE));
-      req.onsuccess = () => res(req.result);
-      req.onerror = () => rej(req.error);
+    return new Promise((resolve, reject) => {
+      try {
+        const tx = db.transaction(STORE, mode);
+        const req = fn(tx.objectStore(STORE));
+        let result: T;
+        // Request success is NOT durable: the transaction can still abort.
+        req.onsuccess = () => {
+          result = req.result;
+        };
+        tx.oncomplete = () => {
+          db.close();
+          resolve(result);
+        };
+        tx.onerror = () => {
+          db.close();
+          reject(tx.error ?? new Error("IndexedDB transaction failed"));
+        };
+        tx.onabort = () => {
+          db.close();
+          reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+        };
+      } catch (error) {
+        db.close();
+        reject(error);
+      }
     });
   }
   async all() {

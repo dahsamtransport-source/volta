@@ -81,4 +81,27 @@ describe("offline queue", () => {
     ).toBe(false);
     expect((await q.list()).length).toBe(1);
   });
+  it("preserves conflicted offline visits for manual reconciliation", async () => {
+    const storage = new MemoryQueueStorage();
+    const q = new OfflineQueue(storage);
+    await q.enqueue({
+      idempotencyKey: "visit-1",
+      table: "visits",
+      op: "insert",
+      payload: { __owner_user_id: "rep-one", outcome: "follow_up" },
+    });
+    await q.markConflict("visit-1", "RLS rejected the visit");
+    const [item] = await new OfflineQueue(storage).list();
+    expect(item.status).toBe("conflict");
+    expect(item.error).toBe("RLS rejected the visit");
+    expect(item.payload.__owner_user_id).toBe("rep-one");
+  });
+  it("discarding an acknowledged operation leaves other queued work intact", async () => {
+    const q = new OfflineQueue(new MemoryQueueStorage());
+    for (const key of ["first", "second"]) {
+      await q.enqueue({ idempotencyKey: key, table: "visits", op: "insert", payload: {} });
+    }
+    await q.discard("first");
+    expect((await q.list()).map((item) => item.idempotencyKey)).toEqual(["second"]);
+  });
 });
