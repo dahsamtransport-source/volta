@@ -96,7 +96,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap",
+      },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/volta-icon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
@@ -127,9 +130,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    const register = () => { void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => console.error("VOLTA service worker registration failed", error)); };
+    const register = () => {
+      void navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .catch((error) => console.error("VOLTA service worker registration failed", error));
+    };
     if (document.readyState === "complete") register();
-    else { window.addEventListener("load", register, { once: true }); return () => window.removeEventListener("load", register); }
+    else {
+      window.addEventListener("load", register, { once: true });
+      return () => window.removeEventListener("load", register);
+    }
   }, []);
 
   return (

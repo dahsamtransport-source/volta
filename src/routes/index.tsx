@@ -7,7 +7,10 @@ export const Route = createFileRoute("/")({
       { title: "لوحة التحكم | VOLTA" },
       { name: "description", content: "لوحة تشغيل ومؤشرات المبيعات الميدانية في لحج" },
       { property: "og:title", content: "VOLTA | لوحة العمليات الميدانية" },
-      { property: "og:description", content: "متابعة المنشآت والزيارات والفرص والمبيعات من لوحة موحدة." },
+      {
+        property: "og:description",
+        content: "متابعة المنشآت والزيارات والفرص والمبيعات من لوحة موحدة.",
+      },
     ],
   }),
   component: OverviewDashboard,
