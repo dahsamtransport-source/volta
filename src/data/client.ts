@@ -7,8 +7,19 @@ import { FIELD_SALES_SCHEMA, FIELD_SALES_URL, getKeyCheck } from "@/lib/config";
  * Until then rows are untyped records — no columns are invented here.
  */
 export const FIELD_SALES_TABLES = [
-  "districts", "representatives", "products", "establishments", "representative_districts",
-  "visits", "opportunities", "quotes", "quote_items", "sales", "sale_items", "sync_events", "audit_log",
+  "districts",
+  "representatives",
+  "products",
+  "establishments",
+  "representative_districts",
+  "visits",
+  "opportunities",
+  "quotes",
+  "quote_items",
+  "sales",
+  "sale_items",
+  "sync_events",
+  "audit_log",
 ] as const;
 export type FieldSalesTable = (typeof FIELD_SALES_TABLES)[number];
 export type Row = Record<string, unknown>;
@@ -36,13 +47,19 @@ export interface PageQuery {
   orderBy?: string;
 }
 
-export interface PageResult { rows: Row[]; total: number | null }
+export interface PageResult {
+  rows: Row[];
+  total: number | null;
+}
 
 /** Server-side pagination; RLS enforced by the database. */
 export async function fetchPage(q: PageQuery): Promise<PageResult> {
   const c = getClient();
   if (!c) throw new Error("NOT_CONNECTED");
-  let req = c.from(q.table).select("*", { count: "exact" }).range(q.page * q.pageSize, q.page * q.pageSize + q.pageSize - 1);
+  let req = c
+    .from(q.table)
+    .select("*", { count: "exact" })
+    .range(q.page * q.pageSize, q.page * q.pageSize + q.pageSize - 1);
   if (q.search?.term) req = req.ilike(q.search.column, `%${q.search.term}%`);
   if (q.orderBy) req = req.order(q.orderBy, { ascending: false });
   const { data, error, count } = await req;
