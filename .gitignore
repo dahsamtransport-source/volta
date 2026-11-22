@@ -1,3 +1,11 @@
+# Never commit Android signing credentials or build outputs
+*.jks
+*.keystore
+android/local.properties
+android/.gradle/
+android/.kotlin/
+android/**/build/
+
 # Logs
 logs
 *.log
