@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { lineTotal, linesTotal, toFixed, parseDec, mul } from "@/lib/decimal";
 import { resolveAccess, can } from "@/lib/auth/roles";
 import { checkPublishableKey } from "@/lib/config";
 import { normalizeYemenPhone } from "@/lib/auth/phone";
-import { OfflineQueue, MemoryQueueStorage } from "@/lib/offline/queue";
+import { OfflineQueue, MemoryQueueStorage, IndexedDbQueueStorage } from "@/lib/offline/queue";
+import { IDBFactory } from "fake-indexeddb";
 
 describe("decimal", () => {
   it("avoids float error 0.1*3", () =>
@@ -98,6 +99,45 @@ describe("offline queue", () => {
     expect(item.error).toBe("RLS rejected the visit");
     expect(item.payload["__owner_user_id"]).toBe("rep-one");
   });
+  it("atomically dedupes simultaneous attempts across two queue objects", async () => {
+    const storage = new MemoryQueueStorage();
+    const q1 = new OfflineQueue(storage);
+    const q2 = new OfflineQueue(storage);
+    const mutation = {
+      idempotencyKey: "simultaneous",
+      table: "visits",
+      op: "insert" as const,
+      payload: { notes: "safe" },
+    };
+    const result = await Promise.all([q1.enqueue(mutation), q2.enqueue(mutation)]);
+    expect(result.sort()).toEqual([false, true]);
+    expect((await q1.list()).length).toBe(1);
+  });
+
+  it("uses atomic IndexedDB inserts and persists a single copy across instances", async () => {
+    vi.stubGlobal("indexedDB", new IDBFactory());
+    try {
+      const q1 = new OfflineQueue(new IndexedDbQueueStorage());
+      const q2 = new OfflineQueue(new IndexedDbQueueStorage());
+      const mutation = {
+        idempotencyKey: "idb-parallel",
+        table: "visits",
+        op: "insert" as const,
+        payload: { notes: "offline" },
+      };
+      const results = await Promise.all([q1.enqueue(mutation), q2.enqueue(mutation)]);
+      expect(results.sort()).toEqual([false, true]);
+      const q3 = new OfflineQueue(new IndexedDbQueueStorage());
+      expect((await q3.list()).map((item) => item.idempotencyKey)).toEqual(["idb-parallel"]);
+      await q3.markConflict("idb-parallel", "RLS denied");
+      expect((await q1.list())[0]?.status).toBe("conflict");
+      await q3.discard("idb-parallel");
+      expect(await q2.list()).toEqual([]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("discarding an acknowledged operation leaves other queued work intact", async () => {
     const q = new OfflineQueue(new MemoryQueueStorage());
     for (const key of ["first", "second"]) {

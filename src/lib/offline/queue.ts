@@ -18,6 +18,7 @@ export interface QueuedMutation {
 export interface QueueStorage {
   all(): Promise<QueuedMutation[]>;
   put(m: QueuedMutation): Promise<void>;
+  addIfAbsent(m: QueuedMutation): Promise<boolean>;
   remove(key: string): Promise<void>;
 }
 
@@ -32,6 +33,11 @@ export class MemoryQueueStorage implements QueueStorage {
   }
   async put(m: QueuedMutation) {
     this.map.set(m.idempotencyKey, m);
+  }
+  async addIfAbsent(m: QueuedMutation): Promise<boolean> {
+    if (this.map.has(m.idempotencyKey)) return false;
+    this.map.set(m.idempotencyKey, m);
+    return true;
   }
   async remove(k: string) {
     this.map.delete(k);
@@ -60,9 +66,13 @@ export class IndexedDbQueueStorage implements QueueStorage {
         const tx = db.transaction(STORE, mode);
         const req = fn(tx.objectStore(STORE));
         let result: T;
+        let requestError: DOMException | null = null;
         // Request success is NOT durable: the transaction can still abort.
         req.onsuccess = () => {
           result = req.result;
+        };
+        req.onerror = () => {
+          requestError = req.error;
         };
         tx.oncomplete = () => {
           db.close();
@@ -70,11 +80,11 @@ export class IndexedDbQueueStorage implements QueueStorage {
         };
         tx.onerror = () => {
           db.close();
-          reject(tx.error ?? new Error("IndexedDB transaction failed"));
+          reject(requestError ?? tx.error ?? new Error("IndexedDB transaction failed"));
         };
         tx.onabort = () => {
           db.close();
-          reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+          reject(requestError ?? tx.error ?? new Error("IndexedDB transaction aborted"));
         };
       } catch (error) {
         db.close();
@@ -95,6 +105,18 @@ export class IndexedDbQueueStorage implements QueueStorage {
   async remove(k: string) {
     await this.tx("readwrite", (s) => s.delete(k));
   }
+  async addIfAbsent(m: QueuedMutation): Promise<boolean> {
+    try {
+      // IDBObjectStore.add is atomic across tabs/concurrent queue instances.
+      // A duplicate key aborts only this transaction, never replacing the original.
+      await this.tx("readwrite", (s) => s.add(m));
+      return true;
+    } catch (error) {
+      if (error && typeof error === "object" && "name" in error && error.name === "ConstraintError")
+        return false;
+      throw error;
+    }
+  }
 }
 
 export class OfflineQueue {
@@ -102,10 +124,11 @@ export class OfflineQueue {
 
   /** Enqueue; duplicate idempotency keys are ignored (duplicate prevention). */
   async enqueue(m: Omit<QueuedMutation, "createdAt" | "status">): Promise<boolean> {
-    const existing = await this.storage.all();
-    if (existing.some((e) => e.idempotencyKey === m.idempotencyKey)) return false;
-    await this.storage.put({ ...m, createdAt: new Date().toISOString(), status: "pending" });
-    return true;
+    return this.storage.addIfAbsent({
+      ...m,
+      createdAt: new Date().toISOString(),
+      status: "pending",
+    });
   }
   list() {
     return this.storage.all();
