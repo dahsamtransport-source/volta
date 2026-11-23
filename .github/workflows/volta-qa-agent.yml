@@ -1,0 +1,43 @@
+name: VOLTA QA Agent — Legacy Parity and Cloudflare Readiness
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 3 * * 1"
+  pull_request:
+    paths:
+      - "src/**"
+      - "android/**"
+      - "scripts/volta-qa-agent.mjs"
+      - ".github/workflows/volta-qa-agent.yml"
+      - "package.json"
+      - "bun.lock"
+      - "vite.config.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  qa-agent:
+    name: Recover legacy parity, run tests and check Cloudflare build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Run isolated, read-only QA agent
+        run: bun run qa:agent
+      - name: Publish QA evidence (never secrets)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: volta-qa-audit
+          path: .qa-output/
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true

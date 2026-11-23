@@ -11,7 +11,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "qa:agent": "node scripts/volta-qa-agent.mjs",
+    "qa:agent:local": "node scripts/volta-qa-agent.mjs --local-ai",
+    "qa:inventory": "node scripts/volta-qa-agent.mjs --inventory-only",
+    "cf:dry-run": "bun run build && wrangler deploy --config .output/server/wrangler.json --dry-run --outdir .wrangler/volta-qa-dry-run"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -93,6 +97,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4"
   }
 }
