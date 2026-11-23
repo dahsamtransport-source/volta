@@ -39,6 +39,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Generated agent evidence (not authoritative source)
+.qa-output/
+
 # Local Graphify knowledge graphs and isolated Python environment
 graphify-out/
 .graphify-venv/
