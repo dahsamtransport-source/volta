@@ -129,17 +129,18 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!("serviceWorker" in navigator)) return undefined;
     const register = () => {
       void navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
         .catch((error) => console.error("VOLTA service worker registration failed", error));
     };
-    if (document.readyState === "complete") register();
-    else {
-      window.addEventListener("load", register, { once: true });
-      return () => window.removeEventListener("load", register);
+    if (document.readyState === "complete") {
+      register();
+      return undefined;
     }
+    window.addEventListener("load", register, { once: true });
+    return () => window.removeEventListener("load", register);
   }, []);
 
   return (

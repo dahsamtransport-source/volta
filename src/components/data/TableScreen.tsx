@@ -30,7 +30,7 @@ export function TableScreen({ table, emptyLabel }: { table: FieldSalesTable; emp
         table,
         page,
         pageSize: PAGE_SIZE,
-        search: column && term ? { column, term } : undefined,
+        ...(column && term ? { search: { column, term } } : {}),
       }),
     placeholderData: keepPreviousData,
   });
@@ -113,7 +113,7 @@ export function TableScreen({ table, emptyLabel }: { table: FieldSalesTable; emp
             <tbody>
               {q.data.rows.map((r, i) => (
                 <tr
-                  key={String(r.id ?? i)}
+                  key={String(r["id"] ?? i)}
                   onClick={() => setSelected(r)}
                   className="cursor-pointer border-t hover:bg-accent/40 focus-within:bg-accent/40"
                 >

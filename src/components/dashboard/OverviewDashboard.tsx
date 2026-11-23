@@ -216,7 +216,7 @@ function MetricCard({
 }: {
   card: (typeof KPI_CARDS)[number];
   value: number | null;
-  trend?: number[];
+  trend?: number[] | undefined;
 }) {
   const Icon = card.icon;
   return (
